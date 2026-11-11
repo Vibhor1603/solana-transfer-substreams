@@ -1,6 +1,6 @@
 # Solana Transfer Substreams
 
-A small Rust **Substreams** package that reads Solana blocks and emits **one JSON object per transfer**:
+I built a small Rust **Substreams** package that reads Solana blocks and emits **one JSON object per transfer**:
 
 ```json
 {"from":"SENDER_WALLET","to":"RECIPIENT_WALLET","amount":325253}
@@ -12,7 +12,7 @@ Graded / demo range: Solana mainnet blocks **385870151–385870156** (inclusive)
 
 ---
 
-## What we actually built (plain language)
+## What I built (plain language)
 
 Think of Solana as a firehose of blocks. Each block contains many transactions; each transaction can contain instructions (including nested “inner” instructions created by programs calling other programs).
 
@@ -20,7 +20,7 @@ This project is a filter + decoder:
 
 1. Connect to a Substreams provider that already has Solana history.
 2. Run a tiny WASM module written in Rust over a block range.
-3. Keep only successful transfers we care about.
+3. Keep only successful transfers I care about.
 4. Print them as simple JSON lines a reviewer can open in any editor.
 
 ```text
@@ -55,13 +55,13 @@ Out of scope on purpose: `TransferWithSeed`, Token-2022 fee variants, SQL sinks,
 
 ---
 
-## What we used
+## What I used
 
 | Piece | Role |
 |---|---|
 | **Rust** → `wasm32-unknown-unknown` | Module language Substreams executes |
 | **Substreams CLI** | Auth, protobuf codegen, build `.spkg`, run/gui |
-| **Buf** (via CLI) | Generate Rust bindings from our `.proto` |
+| **Buf** (via CLI) | Generate Rust bindings from my `.proto` |
 | **`substreams` + `substreams-solana` crates** | Block/tx/instruction helpers (`walk_instructions`, `is_successful`, resolved accounts) |
 | **`substreams-solana-program-instructions`** | Unpack SPL / Token-2022 instruction data |
 | **StreamingFast Solana endpoint** | `mainnet.sol.streamingfast.io:443` |
@@ -122,7 +122,7 @@ Instruction bytes are unpacked with `TokenInstruction`.
 - `Transfer` → source / destination token accounts at indices `0` / `1`
 - `TransferChecked` → source / destination at `0` / `2` (mint sits in the middle)
 
-We replace token-account addresses with **owners** from balance metadata when available. If a rare account has no owner in meta, we fall back to the token-account address rather than dropping the transfer silently without data.
+I replace token-account addresses with **owners** from balance metadata when available. If a rare account has no owner in meta, I fall back to the token-account address rather than dropping the transfer silently without data.
 
 ---
 
