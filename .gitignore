@@ -1,0 +1,24 @@
+# Build
+/target/
+*.spkg
+.last_generated_hash
+
+# Generated protobuf bindings (rebuilt by `substreams build`)
+/src/pb/
+
+# Secrets / credentials
+.substreams.env
+.env
+.env.*
+
+# Local run artifacts
+/out/
+*.jsonl
+!examples/*.jsonl
+replay.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

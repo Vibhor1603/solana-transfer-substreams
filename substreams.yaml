@@ -1,0 +1,34 @@
+specVersion: v0.1.0
+package:
+  name: solana-transfer-substreams
+  version: v0.1.0
+  url: https://github.com/Vibhor1603/solana-transfer-substreams
+  description: |
+    Single map module that extracts native SOL (System Program), SPL Token,
+    and Token-2022 Transfer / TransferChecked instructions from Solana blocks.
+    SPL from/to values are resolved to wallet owners when present in tx metadata.
+
+protobuf:
+  files:
+    - transfers.proto
+  importPaths:
+    - ./proto
+  excludePaths:
+    - sf/substreams
+    - google
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: target/wasm32-unknown-unknown/release/substreams.wasm
+
+modules:
+  - name: map_transfers
+    kind: map
+    initialBlock: 385870151
+    inputs:
+      - source: sf.solana.type.v1.Block
+    output:
+      type: proto:solana.transfers.v1.Transfers
+
+network: solana

@@ -1,0 +1,25 @@
+[package]
+name = "solana-transfer-substreams"
+version = "0.1.0"
+description = "Extract native SOL, SPL Token, and Token-2022 transfers from Solana blocks"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/Vibhor1603/solana-transfer-substreams"
+
+[lib]
+crate-type = ["cdylib"]
+name = "substreams"
+
+[dependencies]
+anyhow = "1"
+bs58 = "0.5"
+prost = "0.13"
+prost-types = "0.13"
+substreams = "0.7"
+substreams-solana = "0.14"
+substreams-solana-program-instructions = "0.2"
+
+[profile.release]
+lto = true
+opt-level = "z"
+strip = "debuginfo"
