@@ -1,8 +1,14 @@
+//! Solana transfer extractor Substreams module.
+//!
+//! Emits native SOL (System Program), SPL Token, and Token-2022
+//! `Transfer` / `TransferChecked` instructions from each successful
+//! transaction. SPL / Token-2022 `from`/`to` are wallet owners when
+//! present in transaction token-balance metadata.
+
 mod pb;
 
 use std::collections::HashMap;
 
-use anyhow::anyhow;
 use substreams::errors::Error;
 use substreams_solana::block_view::InstructionView;
 use substreams_solana::pb::sf::solana::r#type::v1::{
@@ -27,12 +33,14 @@ fn map_transfers(block: Block) -> Result<Transfers, Error> {
     let mut transfers = Vec::new();
 
     for trx in &block.transactions {
+        // Failed txs did not settle — skip their instructions.
         if !trx.is_successful() {
             continue;
         }
 
         let owners = token_account_owners(trx);
 
+        // Top-level + inner (CPI) instructions.
         for ix in trx.walk_instructions() {
             if let Some(transfer) = decode_instruction(&ix, &owners) {
                 transfers.push(transfer);
@@ -69,6 +77,7 @@ fn decode_system_transfer(ix: &InstructionView) -> Option<Transfer> {
 
     let amount = u64::from_le_bytes(data[4..12].try_into().ok()?);
 
+    // System Transfer accounts are already wallet pubkeys.
     Some(Transfer {
         from: accounts[0].to_string(),
         to: accounts[1].to_string(),
@@ -86,13 +95,14 @@ fn decode_token_transfer(
     let (source, destination, amount) = match instruction {
         #[allow(deprecated)]
         TokenInstruction::Transfer { amount } => {
+            // accounts: source, destination, authority, ...
             if accounts.len() < 2 {
                 return None;
             }
             (accounts[0].to_string(), accounts[1].to_string(), amount)
         }
         TokenInstruction::TransferChecked { amount, .. } => {
-            // TransferChecked layout: source, mint, destination, authority, ...
+            // accounts: source, mint, destination, authority, ...
             if accounts.len() < 3 {
                 return None;
             }
@@ -101,16 +111,22 @@ fn decode_token_transfer(
         _ => return None,
     };
 
-    // Option B: emit wallet owners when metadata provides them.
-    let from = owners.get(&source).cloned().unwrap_or(source);
-    let to = owners.get(&destination).cloned().unwrap_or(destination);
+    // Option B: prefer wallet owners over token-account addresses.
+    let from = owners
+        .get(&source)
+        .cloned()
+        .unwrap_or(source);
+    let to = owners
+        .get(&destination)
+        .cloned()
+        .unwrap_or(destination);
 
     Some(Transfer { from, to, amount })
 }
 
 /// Map token-account address → wallet owner using pre/post token balances.
 ///
-/// Keeps the module to a single `map` with Block input (no custom store).
+/// Single map module only — no foundational store / DB / extra services.
 fn token_account_owners(trx: &ConfirmedTransaction) -> HashMap<String, String> {
     let mut owners = HashMap::new();
     let Some(meta) = trx.meta.as_ref() else {
@@ -145,9 +161,4 @@ fn ingest_balance_owners(
             owners.insert(account.clone(), balance.owner.clone());
         }
     }
-}
-
-#[allow(dead_code)]
-fn _ensure_anyhow_link() -> anyhow::Error {
-    anyhow!("unused")
 }

@@ -3,9 +3,6 @@
 *.spkg
 .last_generated_hash
 
-# Generated protobuf bindings (rebuilt by `substreams build`)
-/src/pb/
-
 # Secrets / credentials
 .substreams.env
 .env
